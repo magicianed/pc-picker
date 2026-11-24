@@ -337,7 +337,7 @@
   ];
 
   // gift satisfaction by rank, best PC first
-  var GIFT = ["150%", "100%", "80%", "60%", "40%", "20%", "0%"];
+  var GIFT = ["150%", "100%", "80%", "60%", "40%", "20%", "10%"];
   PCS.forEach(function (p, i) { p.specs["Gift satisfaction"] = GIFT[PCS.length - 1 - i] || "0%"; });
 
   var $ = function (id) { return document.getElementById(id); };
