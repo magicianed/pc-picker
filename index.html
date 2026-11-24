@@ -113,7 +113,7 @@
 
   /* slider */
 
-  .slider { margin-top: auto; padding-top: 8px; }
+  .slider { margin-top: auto; padding-top: 44px; }
 
   .track { position: relative; height: 36px; touch-action: none; cursor: pointer; }
   .track::before {
@@ -140,21 +140,44 @@
   .snap .thumb { transition: left 0.45s var(--ease), transform 0.25s var(--ease); }
   .snap .fill { transition: width 0.45s var(--ease); }
 
+  .bubble {
+    position: absolute; left: 50%; bottom: calc(100% + 12px);
+    transform: translateX(-50%) translateY(6px);
+    padding: 8px 12px;
+    border-radius: 12px;
+    background: var(--white);
+    color: var(--bg);
+    font-size: 14px; font-weight: 600; line-height: 1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.25s var(--ease), transform 0.25s var(--ease);
+  }
+  .track.drag .bubble, .track.hold .bubble { opacity: 1; transform: translateX(-50%); }
+
   .inset { margin: 0 18px; }
 
-  .ticks { position: relative; height: 44px; }
+  .ticks { position: relative; height: 34px; }
   .ticks button {
-    position: absolute; top: 4px;
+    position: absolute; top: 0;
     transform: translateX(-50%);
-    min-width: 40px; min-height: 36px;
-    border: 0; border-radius: 10px; background: none;
-    font: 500 12px/1 var(--mono);
-    color: var(--muted);
+    width: 24px; height: 34px;
+    border: 0; border-radius: 8px; background: none;
+    color: var(--white);
     cursor: pointer;
-    transition: color 0.25s var(--ease);
   }
-  .ticks button:hover, .ticks button.on { color: var(--white); }
-  .ticks button span { display: block; height: 12px; font-size: 10px; }
+  .ticks button::before {
+    content: "";
+    position: absolute; left: 50%; top: 0;
+    width: 2px; height: 10px; margin-left: -1px;
+    border-radius: 1px;
+    background: #5c5c5c;
+    transition: background 0.25s var(--ease), height 0.25s var(--ease);
+  }
+  .ticks button:hover::before, .ticks button.on::before { background: var(--white); }
+  .ticks button.on::before { height: 14px; }
+  .ticks svg { position: absolute; left: 50%; bottom: 2px; width: 13px; height: 13px; margin-left: -6.5px; fill: currentColor; }
 
   /* buttons */
 
@@ -216,11 +239,9 @@
     dl { font-size: 12px; gap: 6px; }
     dl div { grid-template-columns: 42px 1fr; gap: 6px; }
     .name { font-size: 13px; margin-bottom: 8px; }
-    .ticks button { font-size: 11px; min-width: 34px; }
   }
 
   @media (max-width: 345px) {
-    .ticks button:not(.on) { font-size: 0; }
     dl div { grid-template-columns: 1fr; gap: 0; }
   }
 
@@ -233,7 +254,7 @@
 <main>
   <header>
     <div class="price" id="price"><span id="priceText"></span>
-      <svg class="star" viewBox="0 0 24 24" role="img" aria-label="Preferred PC"><path d="M12 1.8l3.1 6.5 7.1.9-5.2 4.9 1.3 7.1L12 17.8l-6.3 3.4L7 14.1 1.8 9.2l7.1-.9z"/></svg>
+      <svg class="star" viewBox="0 0 24 24" role="img" aria-label="Preferred PC"><path id="starPath" d="M12 1.8l3.1 6.5 7.1.9-5.2 4.9 1.3 7.1L12 17.8l-6.3 3.4L7 14.1 1.8 9.2l7.1-.9z"/></svg>
     </div>
     <div class="score"><span id="score"></span> <small id="pct"></small></div>
   </header>
@@ -250,7 +271,7 @@
     <div class="inset">
       <div class="track" id="track">
         <div class="fill" id="fill"></div>
-        <div class="thumb" id="thumb" role="slider" tabindex="0" aria-label="Price"></div>
+        <div class="thumb" id="thumb" role="slider" tabindex="0" aria-label="Price"><div class="bubble" id="bubble" aria-hidden="true"></div></div>
       </div>
       <div class="ticks" id="ticks"></div>
     </div>
@@ -278,38 +299,40 @@
   var WHITE_CASE = CP + "images/cs/amethyst240s/wht_sitewide_800x800.png";
   function build(id) { return CP + "cart/editsystem.aspx?id=" + id; }
 
-  // To update a PC, edit its entry here. "point" is the slider stop, "price" is
-  // what you really pay after the code, "raw" is the estimated speed.
+  // To update a PC, edit its entry here. "price" is what you really pay (after
+  // the code, if there is one) and decides where its tick sits on the slider.
+  // "raw" is the estimated speed. Keep them cheapest first, each better than the last.
   var PCS = [
-    { point: 1000, price: 1049.99, raw: 97.0, name: "Stormcraft Sirius",
+    { price: 1049.99, raw: 97.0, name: "Stormcraft Sirius",
       img: "https://c1.neweggimages.com/productimage/nb640/83-420-040-33.jpg", light: true,
       url: "https://www.newegg.com/stormcraft-sirius-gaming-desktop-pc-geforce-rtx-5060-intel-core-i5-14400f-16gb-ddr4-1tb-ssd-si1440fbb-560n2/p/N82E16883420040",
       specs: { CPU: "Core i5-14400F", GPU: "RTX 5060 8GB", RAM: "16GB DDR4", SSD: "1TB", PSU: "650W", Store: "Newegg" } },
 
-    { point: 1250, price: 1311.00, raw: 116.9, name: "CyberPowerPC custom", code: "BLACKFRIDAY", list: 1380,
-      img: CP + "images/cs/javelin240v/wht_sitewide_400x400.png", url: build(18205545),
-      specs: { CPU: "Ryzen 7 8700F", GPU: "RX 9070 GRE 12GB", RAM: "16GB DDR5", SSD: "1TB", PSU: "600W", Store: "CyberPowerPC" } },
+    { price: 1199.99, raw: 107.0, name: "Stormcraft Viper",
+      img: "https://c1.neweggimages.com/productimage/nb640/83-420-051-24.jpg", light: true,
+      url: "https://www.newegg.com/stormcraft-gaming-desktop-pc-geforce-rtx-5060-ti-intel-core-i5-14400f-16gb-ddr4-1tb-ssd-viper/p/N82E16883420051",
+      specs: { CPU: "Core i5-14400F", GPU: "RTX 5060 Ti 8GB", RAM: "16GB DDR4", SSD: "1TB", PSU: "650W", Store: "Newegg" } },
 
-    { point: 1500, price: 1498.15, raw: 142.7, name: "CyberPowerPC custom", code: "BLACKFRIDAY", list: 1577,
+    { price: 1399.35, raw: 127.0, name: "CyberPowerPC custom", code: "BLACKFRIDAY",
+      img: CP + "images/cs/javelin240v/wht_sitewide_400x400.png", url: build(18205558),
+      specs: { CPU: "Ryzen 5 9500F", GPU: "RX 9070 GRE 12GB", RAM: "16GB DDR5", SSD: "1TB", PSU: "800W", Store: "CyberPowerPC" } },
+
+    { price: 1498.15, raw: 142.8, name: "CyberPowerPC custom", code: "BLACKFRIDAY",
       img: WHITE_CASE, url: build(18205537),
       specs: { CPU: "Ryzen 7 7800X3D", GPU: "RX 9070 GRE 12GB", RAM: "16GB DDR5", SSD: "1TB", PSU: "800W", Store: "CyberPowerPC" } },
 
-    { point: 1650, price: 1669.15, raw: 147.1, name: "CyberPowerPC custom", code: "BLACKFRIDAY", list: 1757,
+    { price: 1669.15, raw: 147.2, name: "CyberPowerPC custom", code: "BLACKFRIDAY",
       img: WHITE_CASE, url: build(18205503),
       specs: { CPU: "Ryzen 7 7800X3D", GPU: "RX 9070 GRE 12GB", RAM: "32GB DDR5", SSD: "1TB", PSU: "800W", Store: "CyberPowerPC" } },
 
-    { point: 1750, price: 1849.99, raw: 168.6, name: "CyberPowerPC at Best Buy", star: true,
+    { price: 1849.99, raw: 168.6, name: "CyberPowerPC at Best Buy", star: true,
       img: "https://pisces.bbystatic.com/image2/BestBuy_US/images/products/6668/6668823_sd.jpg", light: true,
       url: "https://www.bestbuy.com/product/cyberpowerpc-gaming-desktop-amd-ryzen-7-9800x3d-2024-amd-radeon-rx-9070-16gb-32gb-ddr5-memory-1tb-ssd-storage-black/J3L7GQWRZC",
       specs: { CPU: "Ryzen 7 9800X3D", GPU: "RX 9070 16GB", RAM: "32GB DDR5", SSD: "1TB", PSU: "850W", Store: "Best Buy" } },
 
-    { point: 2000, price: 2073.85, raw: 177.0, name: "CyberPowerPC custom", code: "BLACKFRIDAY", list: 2183,
-      img: WHITE_CASE, url: build(18205542),
-      specs: { CPU: "Ryzen 7 9800X3D", GPU: "RX 9070 XT 16GB", RAM: "16GB DDR5", SSD: "1TB", PSU: "800W", Store: "CyberPowerPC" } },
-
-    { point: 2250, price: 2244.85, raw: 182.5, name: "CyberPowerPC custom", code: "BLACKFRIDAY", list: 2363,
-      img: WHITE_CASE, url: build(18205540),
-      specs: { CPU: "Ryzen 7 9800X3D", GPU: "RX 9070 XT 16GB", RAM: "32GB DDR5", SSD: "1TB", PSU: "800W", Store: "CyberPowerPC" } }
+    { price: 2254.35, raw: 182.4, name: "CyberPowerPC custom", code: "BLACKFRIDAY",
+      img: WHITE_CASE, url: build(18205561),
+      specs: { CPU: "Ryzen 7 9800X3D", GPU: "RX 9070 XT 16GB", RAM: "32GB DDR5", SSD: "1TB", PSU: "850W", Store: "CyberPowerPC" } }
   ];
 
   var $ = function (id) { return document.getElementById(id); };
@@ -317,6 +340,15 @@
   var lowest = PCS[0].raw;
   var best = Math.max.apply(null, PCS.map(function (p) { return p.raw; }));
   var still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  // the track is a real price line, so each PC's tick sits at its actual price
+  var low = PCS[0].price, high = PCS[last].price;
+  function spot(p) { return (p.price - low) / (high - low); }
+  function nearest(f) {
+    var price = low + f * (high - low), n = 0;
+    PCS.forEach(function (p, i) { if (Math.abs(p.price - price) < Math.abs(PCS[n].price - price)) n = i; });
+    return n;
+  }
 
   var current = -1, shown = 0, swapTimer = 0, tween = 0;
 
@@ -363,9 +395,9 @@
 
     [].forEach.call($("ticks").children, function (b, n) { b.classList.toggle("on", n === i); });
     var t = $("thumb");
-    t.setAttribute("aria-valuemin", PCS[0].point);
-    t.setAttribute("aria-valuemax", PCS[last].point);
-    t.setAttribute("aria-valuenow", p.point);
+    t.setAttribute("aria-valuemin", low);
+    t.setAttribute("aria-valuemax", high);
+    t.setAttribute("aria-valuenow", p.price);
     t.setAttribute("aria-valuetext", money(p.price) + ", " + p.name + (p.star ? ", preferred" : ""));
 
     clearTimeout(swapTimer);
@@ -374,16 +406,20 @@
     swapTimer = setTimeout(function () { fillCard(p); $("pc").classList.remove("swap"); }, 170);
   }
 
-  // slider: 0..1 along the track, snaps to the nearest stop on release
+  // slider: 0..1 along the track, snaps to the nearest PC on release
 
+  var holdTimer = 0;
   function place(f) {
     $("thumb").style.left = f * 100 + "%";
     $("fill").style.width = f * 100 + "%";
   }
   function snapTo(i) {
-    $("track").classList.add("snap");
-    place(i / last);
+    $("track").classList.add("snap", "hold");
+    place(spot(PCS[i]));
+    $("bubble").textContent = money(PCS[i].price);
     show(i);
+    clearTimeout(holdTimer);
+    holdTimer = setTimeout(function () { $("track").classList.remove("hold"); }, 1100);
   }
   function at(e) {
     var r = $("track").getBoundingClientRect();
@@ -391,13 +427,19 @@
   }
 
   var dragging = false, frac = 0;
-  function move(e) { frac = at(e); place(frac); show(Math.round(frac * last)); }
+  function move(e) {
+    frac = at(e);
+    place(frac);
+    $("bubble").textContent = "$" + Math.round(low + frac * (high - low)).toLocaleString("en-US");
+    show(nearest(frac));
+  }
 
   $("track").addEventListener("pointerdown", function (e) {
     if (e.button) return;
     dragging = true;
     try { $("track").setPointerCapture(e.pointerId); } catch (err) {}
-    $("track").classList.remove("snap");
+    clearTimeout(holdTimer);
+    $("track").classList.remove("snap", "hold");
     $("track").classList.add("drag");
     move(e);
     $("thumb").focus({ preventScroll: true });
@@ -409,7 +451,7 @@
       if (!dragging) return;
       dragging = false;
       $("track").classList.remove("drag");
-      snapTo(Math.round(frac * last));
+      snapTo(nearest(frac));
     });
   });
 
@@ -421,11 +463,12 @@
   });
 
   PCS.forEach(function (p, i) {
-    var b = document.createElement("button"), s = document.createElement("span");
+    var b = document.createElement("button");
     b.type = "button";
-    b.style.left = i / last * 100 + "%";
-    s.textContent = p.star ? "★" : "";
-    b.append(s, "$" + p.point);
+    b.tabIndex = -1;
+    b.style.left = spot(p) * 100 + "%";
+    b.setAttribute("aria-label", money(p.price) + (p.star ? ", preferred" : ""));
+    if (p.star) b.innerHTML = '<svg viewBox="0 0 24 24"><path d="' + $("starPath").getAttribute("d") + '"/></svg>';
     b.addEventListener("click", function () { snapTo(i); });
     $("ticks").append(b);
   });
@@ -455,7 +498,7 @@
   });
 
   var start = PCS.findIndex(function (p) { return p.star; });
-  place(start / last);
+  place(spot(PCS[start]));
   show(start);
 
   // load the other photos ahead of time so the slider never waits on one
