@@ -113,7 +113,7 @@
 
   /* slider */
 
-  .slider { margin-top: auto; padding-top: 44px; }
+  .slider { margin-top: auto; padding-top: 34px; }
 
   .track { position: relative; height: 36px; touch-action: none; cursor: pointer; }
   .track::before {
@@ -350,7 +350,7 @@
     return n;
   }
 
-  var current = -1, shown = 0, swapTimer = 0, tween = 0;
+  var current = -1, shown = 0, swapTimer = 0, tween = 0, settle = 0;
 
   function money(n) {
     return "$" + n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -358,8 +358,15 @@
 
   function countTo(target) {
     cancelAnimationFrame(tween);
+    clearTimeout(settle);
     var from = shown, t0 = performance.now();
     if (still || !from || document.hidden) { shown = target; $("priceText").textContent = money(target); return; }
+    // the real price always lands, even if the browser pauses animation frames
+    settle = setTimeout(function () {
+      cancelAnimationFrame(tween);
+      shown = target;
+      $("priceText").textContent = money(target);
+    }, 380);
     (function step(now) {
       var k = Math.min(1, (now - t0) / 350);
       shown = from + (target - from) * (1 - Math.pow(1 - k, 3));
