@@ -54,7 +54,7 @@
   .price, .score { font-variant-numeric: tabular-nums; letter-spacing: -0.035em; line-height: 1.05; }
 
   .price {
-    font-size: clamp(48px, 10vw, 84px);
+    font-size: clamp(36px, 13vw, 84px);
     font-weight: 600;
     display: flex;
     align-items: center;
@@ -71,7 +71,7 @@
 
   .score {
     margin-top: 10px;
-    font-size: clamp(26px, 5.4vw, 44px);
+    font-size: clamp(20px, 6.6vw, 44px);
     font-weight: 500;
   }
   .score small { font-size: inherit; font-weight: 400; color: var(--muted); }
@@ -217,6 +217,11 @@
     dl div { grid-template-columns: 42px 1fr; gap: 6px; }
     .name { font-size: 13px; margin-bottom: 8px; }
     .ticks button { font-size: 11px; min-width: 34px; }
+  }
+
+  @media (max-width: 345px) {
+    .ticks button:not(.on) { font-size: 0; }
+    dl div { grid-template-columns: 1fr; gap: 0; }
   }
 
   @media (prefers-reduced-motion: reduce) {
