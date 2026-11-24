@@ -109,6 +109,7 @@
 
   dl { display: grid; gap: 8px; font-size: 13px; line-height: 1.4; }
   dl div { display: grid; grid-template-columns: 56px 1fr; gap: 10px; }
+  dl .wide { grid-template-columns: auto 1fr !important; gap: 10px; }
   dt { color: var(--muted); }
 
   /* slider */
@@ -335,6 +336,10 @@
       specs: { CPU: "Ryzen 7 9800X3D", GPU: "RX 9070 XT 16GB", RAM: "32GB DDR5", SSD: "1TB", PSU: "850W", Store: "CyberPowerPC" } }
   ];
 
+  // gift satisfaction by rank, best PC first
+  var GIFT = ["150%", "100%", "80%", "60%", "40%", "20%", "0%"];
+  PCS.forEach(function (p, i) { p.specs["Gift satisfaction"] = GIFT[PCS.length - 1 - i] || "0%"; });
+
   var $ = function (id) { return document.getElementById(id); };
   var last = PCS.length - 1;
   var lowest = PCS[0].raw;
@@ -386,6 +391,7 @@
     Object.keys(p.specs).forEach(function (k) {
       var d = document.createElement("div"), dt = document.createElement("dt"), dd = document.createElement("dd");
       dt.textContent = k; dd.textContent = p.specs[k];
+      if (k.length > 6) d.className = "wide";
       d.append(dt, dd); $("specs").append(d);
     });
   }
